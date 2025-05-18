@@ -1,26 +1,20 @@
-import { State as StateDef, Transition as TransitionDef } from "./types";
-import { AnimationController } from "./animationController";
-import { Animation } from "./animation";
-
-interface IAnimationControllerTransitionOptions<
-  Trigger extends string,
-  Flag extends string
-> {
-  animation: Animation;
-  speed?: number;
-  triggers?: Trigger[];
-  reverse?: boolean;
-  flagConditions?: Partial<Record<Flag, boolean>>;
-}
+import { AnimationType } from "../animation/types";
+import { AnimationController } from "./controller";
+import { StateParams } from "./state";
+import { Transition } from "./transition";
+import { buildTriggers } from "./trigger";
+import { IAnimationControllerTransitionOptions } from "./types";
 
 export class AnimControllerBuilder<
   State extends string = never,
   Trigger extends string = never,
-  Flag extends string = never
+  Flag extends string = never,
+  AnimType extends AnimationType = AnimationType
 > {
-  private _states: StateDef<State>[] = [];
-  private _transitions: TransitionDef<State, Trigger, Flag>[] = [];
+  private _states: StateParams<State, AnimType>[] = [];
+  private _transitions: Transition<State, Trigger, Flag, AnimType>[] = [];
   private _flagNames = new Set<Flag>();
+  private _triggerNames = new Set<Trigger>();
   private _speed: number = 1;
 
   /**
@@ -38,13 +32,23 @@ export class AnimControllerBuilder<
     return this as any;
   }
 
+  public addTrigger<NewTrigger extends string>(
+    trigger: NewTrigger
+  ): AnimControllerBuilder<State, Trigger | NewTrigger, Flag> {
+    if (this._triggerNames.has(trigger as any)) {
+      throw new Error(`Trigger "${trigger}" already declared`);
+    }
+    this._triggerNames.add(trigger as any);
+    return this as any;
+  }
+
   /**
    *
    * @param state
    * @returns
    */
   public addState<NewState extends string>(
-    state: StateDef<NewState>
+    state: StateParams<NewState, AnimType>
   ): AnimControllerBuilder<NewState | State, Trigger, Flag> {
     if (this._states.some((s) => s.name === state.name.toString())) {
       throw new Error(`State "${state.name}" already declared`);
@@ -59,17 +63,13 @@ export class AnimControllerBuilder<
    * @param options
    * @returns
    */
-  public addTransition<
-    From extends State,
-    To extends State,
-    NF extends Flag,
-    T extends Trigger
-  >(
+  public addTransition<From extends State, To extends State>(
     transitionKey: `${From}->${To}`,
-    options?: IAnimationControllerTransitionOptions<T, NF>
+    optionsRaw?: IAnimationControllerTransitionOptions<Trigger, Flag, AnimType>
   ): AnimControllerBuilder<State, Trigger, Flag> {
     const [from, to] = transitionKey.split("->") as [From, To];
 
+    // Sanity checks
     if (!this._states.find((s) => s.name === from)) {
       throw new Error(`State "${from}" not declared`);
     }
@@ -77,23 +77,17 @@ export class AnimControllerBuilder<
       throw new Error(`State "${to}" not declared`);
     }
 
-    if (this._transitions.some((t) => t.from === from && t.to === to)) {
-      throw new Error(`Transition "${from} -> ${to}" already declared`);
-    }
+    const options = optionsRaw as any;
 
     this._transitions.push({
       from,
       to,
       animation: options?.animation,
-      triggers: options?.triggers,
-      flagConditions: options?.flagConditions as Partial<Record<Flag, boolean>>,
+      triggers: buildTriggers(options),
+      flagConditions: options?.flagConditions,
       animationSpeed: options?.speed,
     });
     if (options?.reverse) {
-      if (this._transitions.some((t) => t.from === to && t.to === from)) {
-        throw new Error(`Transition "${to} -> ${from}" already declared`);
-      }
-
       const reverseFlagConditions = Object.fromEntries(
         Object.entries(options.flagConditions ?? {}).map(([key, value]) => [
           key,

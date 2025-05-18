@@ -1,30 +1,25 @@
-import { Animation } from "./animation";
-
-/**
- * A single state in your controller.
- */
-export interface State<StateName extends string> {
-  name: StateName;
-  animation: Animation;
-}
+import { Animation } from "../animation/index";
+import { AnimationType } from "../animation/types";
+import { TriggerParams } from "./trigger";
 
 /**
  * A transition from one state to another.
  */
 export interface Transition<
   StateName extends string,
-  TriggerName extends string = string,
-  FlagName extends string = string
+  TriggerName extends string,
+  FlagName extends string,
+  AnimType extends AnimationType
 > {
   from: StateName;
   to: StateName;
 
-  animation?: Animation;
+  animation?: Animation<AnimType>;
 
   animationSpeed?: number;
 
   /** Optional event or trigger name */
-  triggers?: TriggerName[];
+  triggers?: Partial<Record<TriggerName, TriggerParams>>;
 
   /** Optional flag name(s) to check before performing the transition */
   flagConditions?: Partial<Record<FlagName, boolean>>;
