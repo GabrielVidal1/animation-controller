@@ -1,6 +1,6 @@
 export type AnimationType = () => void | Promise<void>;
 
-export interface AnimationContructorParams<AP extends AnimationType> {
+export interface AnimationConstructorParams<AP extends AnimationType> {
   /** The name of the animation */
   name: string;
   speed?: number;

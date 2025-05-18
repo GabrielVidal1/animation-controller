@@ -1,0 +1,5 @@
+src/
+*.test.ts
+tsconfig*.json
+rollup.config.mjs
+vitest.config.*

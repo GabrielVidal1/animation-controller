@@ -1,4 +1,4 @@
-import { AnimationType, AnimationContructorParams } from "./types";
+import { AnimationType, AnimationConstructorParams } from "./types";
 
 export class Animation<AP extends AnimationType> {
   public name: string;
@@ -17,7 +17,7 @@ export class Animation<AP extends AnimationType> {
     stop,
     speed = 1,
     loop = false,
-  }: AnimationContructorParams<AP>) {
+  }: AnimationConstructorParams<AP>) {
     this.name = name;
     this._play = play;
     this._stop = stop ?? (() => {});
@@ -55,7 +55,7 @@ export class Animation<AP extends AnimationType> {
 
   public clone(): Animation<AP> {
     const copy = new (this.constructor as {
-      new (params: AnimationContructorParams<AP>): Animation<AP>;
+      new (params: AnimationConstructorParams<AP>): Animation<AP>;
     })({} as any);
     Object.assign(copy, this);
     return copy;

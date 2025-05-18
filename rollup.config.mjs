@@ -1,4 +1,4 @@
-import typescript from "rollup-plugin-typescript2";
+import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 
@@ -15,8 +15,13 @@ export default {
     },
   ],
   plugins: [
-    resolve(),
+    resolve({
+      extensions: [".ts", ".js"],
+    }),
     commonjs(),
-    typescript({ tsconfig: "./tsconfig.json", exclude: ["src/tests/**"] }),
+    typescript({
+      tsconfig: "./tsconfig.json",
+      exclude: ["src/tests/**"],
+    }),
   ],
 };
